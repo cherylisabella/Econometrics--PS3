@@ -71,10 +71,12 @@ stargazer(reg, type = "latex",
           no.space = TRUE, 
           column.sep.width = "3pt", 
           title = "Regression Results for Log-linear Model",
-          covariate.labels = c("Male Adults", "Female Adults", "Head's Age", "Head's Education", "Distance to Health Center (km)", "Distance to School (km)", "Land Owned"),
+          covariate.labels = c("Male Adults", "Female Adults", "Head's Age", "Head's Education", 
+                               "Distance to Health Center (km)", "Distance to School (km)", "Land Owned"),
           dep.var.labels = "Log of Total Household Consumption",
           digits = 3,
-          header = FALSE)
+          header = FALSE,
+          out = "regression1_results.html")  # saves output to a file for github
 ```
 
 ```{r, include=FALSE}
@@ -148,13 +150,17 @@ Then, calculating the p-value we find it to be equal to `r p_value_2`, meaning t
 corr_educ_age <- cor(nichh$headeduc, nichh$headage, use = "complete.obs") # significant at 5% but not at 1%
 ```
 ```{r, corrplot, echo=FALSE, warning=FALSE, fig.align='center'}
-ggplot(nichh, aes(x = headeduc, y = headage)) +
+# correlation plot
+corplot <- ggplot(nichh, aes(x = headeduc, y = headage)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "headeduc", y = "headage") +
   geom_text(x = max(nichh$headeduc), y = max(nichh$headage),
             label = paste("Correlation: -0.3117732"),
             hjust = 1, vjust = 1)
+
+# save the plot as a PNG file
+ggsave("headeduc_headage_plot.png", plot = corplot, width = 6, height = 4, dpi = 300)
 ```
 Calculating the correlation between household head education and age, we obtain a value of `r corr_educ_age`.
 
@@ -204,12 +210,13 @@ We can perform a t-test to test whether the coefficient of education is differen
 #filter the data to exclude households with more than 100 hectares of land
 nichh_filtered <- nichh %>% filter(landarea < 100)
 
-ggplot(nichh_filtered, aes(x=landarea)) + 
+reestimation <- ggplot(nichh_filtered, aes(x=landarea)) + 
   geom_histogram(aes(y = after_stat(density)), 
                  fill = "blue",
                  alpha = 0.3) +
   geom_density(color="blue") + 
   theme_bw()
+ggsave("reestimation_less100.png", plot = reestimation, width = 6, height = 4, dpi = 300)
 
 # re-estimate the model excluding households with more than 100 ha
 model_filtered <- lm(log(constot) ~ headage + headeduc + adultm + adultf + landarea + healthkm + schoolkm, data = nichh_filtered)
@@ -246,7 +253,8 @@ stargazer(model_filtered, type = "latex",
           covariate.labels = c("Head's Age", "Head's Education", "Male Adults", "Female Adults", "Land Owned", "Distance to School (km)", "Distance to Health Center (km)"),
           dep.var.labels = "Log of Total Household Consumption",
           digits = 3,
-          header = FALSE)
+          header = FALSE,
+          out = "regression2_results.html")
 ```
 
 Looking at the summary statistics and Figure 1, the density plot for households' land area is skewed to the left, with most households having around 25ha. 
